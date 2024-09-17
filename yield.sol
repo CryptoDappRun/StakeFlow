@@ -8,6 +8,8 @@ contract TokenYield is ReentrancyGuard {
     IERC20 public stakingToken;
     uint256 public annualYieldRate; // In percentage (e.g., 10 for 10%)
     uint256 public totalStaked;
+    uint256 public totalYield; // Tracks the total yield accumulated across all users
+    
     uint256 public constant SECONDS_IN_YEAR = 31536000; // Number of seconds in a year
     //uint256 public constant LOCK_PERIOD = 30 days; // Lock period of 30 days
 
@@ -91,6 +93,9 @@ contract TokenYield is ReentrancyGuard {
 
         // Check if the contract has enough tokens for withdrawal
         require(stakingToken.balanceOf(address(this)) >= totalAmount, "Contract does not have enough tokens");
+
+        // Update the total yield accumulated across all users
+        totalYield += yield;
 
         // Reset staker info
         stakers[msg.sender].amount = 0;

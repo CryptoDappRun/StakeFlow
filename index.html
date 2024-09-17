@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StakeFlow Farming DEFI yield</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .sidebar {
+            background-color: #f8f9fa;
+            height: 100vh;
+            padding: 20px;
+        }
+        .card-farm {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .farm-header {
+            display: flex;
+            justify-content: space-between;
+        }
+        .icon {
+            width: 40px;
+            height: 40px;
+            background-color: #e0e0e0;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .farm-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        .farm-stats p {
+            margin-bottom: 0;
+        }
+        .btn-farm {
+            background-color: #f5a623;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+        .btn-farm:hover {
+            background-color: #e5941f;
+        }
+        .farm-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .asset-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+        }
+        .asset-row:hover {
+            background-color: #f8f9fa;
+        }
+        .asset-row p {
+            margin-bottom: 0;
+        }
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+            border-width: .2em;
+        }
+
+
+
+.fade-in-out {
+    animation: fadeInOut 1s;
+}
+
+@keyframes fadeInOut {
+    0% {
+        opacity: 0;
+        color: red;
+    }
+    50% {
+        opacity: 1;
+        color: red;
+    }
+    100% {
+        opacity: 0;
+        color: red;
+    }
+}
+
+
+ .event-container { 
+            width: 100%; 
+            text-align: left; 
+            font-size: 24px;
+            color: green;
+            margin-top: 10px;
+        }
+        .event {
+            opacity: 0;
+            transition: opacity 2s;
+        }
+        .event.active {
+            opacity: 1;
+        }
+
+
+
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-2 sidebar">
+            <h1>StakeFlow</h1>
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link active" href="#">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">Farms</a></li>
+
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-10">
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <h2>Good to see you, farmer!</h2>
+                <div>
+                    <button class="btn btn-outline-primary" id="connectButton">Connect Metamask Wallet</button>
+                    <span id="walletAddress" style="margin-left: 10px;"></span>
+                </div>
+            </div>
+
+            <!-- Farms Info -->
+            <div class="row mt-4">
+                <div class="col-md-3">
+                    <div class="card-farm">
+                        <div class="farm-header">
+                            <div  ><img height="30" width="30" src="image/usdt.png"></div>
+                            <div>
+                                <p id="TokenNameID" class="mb-0">x</p>
+                                <small id="LockDaysID">-</small>
+                                 
+                            </div>
+                        </div>
+                        <div class="farm-stats">
+                            <p><strong id="annualYieldRateID" style="color: red;" >x%</strong></p>
+                            <small id="totalStakedID"> </small>
+                            
+                        </div>
+
+                        <div class="farm-stats">
+                        <small id="totalYieldID"> </small>
+                        </div>
+                        <!-- Stake input field and button -->
+                        <input type="text" id="stakeAmount" placeholder="Amount to stake" class="form-control mt-2">
+                        <button class="btn-farm   mt-2" id="stakeButton">
+                        <span id="stakeButtonText">Stake</span>
+                        <span id="stakeSpinner" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
+                        </button>
+
+                        <button class="btn-farm   mt-2" id="withdrawButton">
+                        <span id="withdrawButtonText">Withdraw</span>
+                        <span id="withdrawSpinner" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
+                        </button>
+                        
+                        <!-- Display staked amount and yield -->
+                        <div class="mt-3">
+                            <p><strong>Staked:</strong> <span id="stakedAmount">0</span> </p>
+                            <p><strong>Yield:</strong> <span id="yieldAccumulated">0</span> </p>
+                            <p><strong>Gain:</strong> <span id="GainID" style="color: green;">0</span> </p>
+
+                        </div>
+                    </div>
+                </div> 
+
+                <!-- Repeat for other farm cards <div class="icon"></div> -->
+                <div class="col-md-3">
+                    <div class="card-farm">
+                        <div class="farm-header">
+                            
+                            <div>
+                                <p class="mb-0"></p>
+                                <small> </small>
+                            </div>
+                        </div>
+                        <div class="farm-stats">
+                            <p><strong> </strong></p>
+                            <small> </small>
+                        </div>
+                        <button class="btn-farm w-100 mt-2" id="GetFreeTokenID">Get test token for free</button>
+                    </div>
+                </div>
+
+                <!-- Add more cards as necessary -->
+            </div>
+
+
+<div class="mt-5">
+<h1>Last Staked</h1>
+    <div class="event-container" id="eventDisplay">
+        <!-- Event messages will fade in and out here -->
+    </div>
+
+    </div>
+            <!-- Recommended section 
+            <div class="mt-5">
+                <h4>Recommended for</h4>
+                <div class="d-flex">
+                    <button class="btn btn-outline-primary me-2">Beginners</button>
+                    <button class="btn btn-outline-secondary me-2">Advanced</button>
+                    <button class="btn btn-outline-secondary">Degens</button>
+                </div>
+            </div>
+
+           
+            <div class="mt-4">
+                <div class="farm-info">
+                    <p><strong>Asset</strong></p>
+                    <p><strong>APY</strong></p>
+                    <p><strong>Total deposits</strong></p>
+                    <p><strong>My balance</strong></p>
+                </div>
+
+                <div class="asset-row">
+                    <p>WETH</p>
+                    <p>0.49%</p>
+                    <p>2.39m</p>
+                    <p>0.00</p>
+                    <button class="btn-farm">Earn</button>
+                </div>
+
+ -->
+            </div>
+
+
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // MetaMask/Web3 integration
+    let web3;
+    let contract;
+    let stakingTokenContract;
+    let userAccount;
+
+const stakingContractAddress = '0xDa5516bd305d054e2CF49F535A106E4C5f9CF62A'; // Replace with your deployed staking contract address
+    const stakingContractABI = [{"inputs":[{"internalType":"contract IERC20","name":"_stakingToken","type":"address"},{"internalType":"uint256","name":"_annualYieldRate","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Staked","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"yield","type":"uint256"}],"name":"Withdrawn","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"newRate","type":"uint256"}],"name":"YieldRateChanged","type":"event"},{"inputs":[],"name":"LOCK_PERIOD","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"SECONDS_IN_YEAR","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"annualYieldRate","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_staker","type":"address"}],"name":"calculateYield","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_staker","type":"address"}],"name":"getStakedAmountAndYield","outputs":[{"internalType":"uint256","name":"stakedAmount","type":"uint256"},{"internalType":"uint256","name":"yieldAccumulated","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_annualYieldRate","type":"uint256"}],"name":"setAnnualYieldRate","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"stake","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"stakers","outputs":[{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"uint256","name":"lastTimestamp","type":"uint256"},{"internalType":"uint256","name":"yieldAccumulated","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"stakingToken","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalStaked","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalYield","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"withdraw","outputs":[],"stateMutability":"nonpayable","type":"function"}]; // Replace with your staking contract ABI
+
+    const tokenContractAddress = '0x91FeC63d71BACe0B5Fc8a0d88960B2F48aEfcddd'; // Replace with your token (ERC20) contract address
+    const tokenContractABI = [{"inputs":[{"internalType":"uint256","name":"initialSupply","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"allowance","type":"uint256"},{"internalType":"uint256","name":"needed","type":"uint256"}],"name":"ERC20InsufficientAllowance","type":"error"},{"inputs":[{"internalType":"address","name":"sender","type":"address"},{"internalType":"uint256","name":"balance","type":"uint256"},{"internalType":"uint256","name":"needed","type":"uint256"}],"name":"ERC20InsufficientBalance","type":"error"},{"inputs":[{"internalType":"address","name":"approver","type":"address"}],"name":"ERC20InvalidApprover","type":"error"},{"inputs":[{"internalType":"address","name":"receiver","type":"address"}],"name":"ERC20InvalidReceiver","type":"error"},{"inputs":[{"internalType":"address","name":"sender","type":"address"}],"name":"ERC20InvalidSender","type":"error"},{"inputs":[{"internalType":"address","name":"spender","type":"address"}],"name":"ERC20InvalidSpender","type":"error"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"mint","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}]; // Replace with your token contract ABI
+        const MAX_UINT256 = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'; // Maximum value for token approval
+
+
+ 
+
+ window.addEventListener('load', async () => {
+        if (typeof window.ethereum !== 'undefined') {
+            web3 = new Web3(window.ethereum);
+            try {
+                // Request account access
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                userAccount = accounts[0];
+
+                var ShowAccount=userAccount.slice(0, 4) + '...'+userAccount.slice(-2)
+
+                document.getElementById('walletAddress').innerText = `Connected: ${ShowAccount}`;
+                document.getElementById('connectButton').style.display = 'none';
+                
+
+                // Check and switch network if necessary
+            const currentNetworkId = await window.ethereum.request({ method: 'net_version' });
+            const polygonNetworkId = '137'; // Polygon Mainnet Network ID
+
+            if (currentNetworkId !== polygonNetworkId) {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: '0x89' }] // Polygon Mainnet Chain ID in hexadecimal
+                });
+                console.log('Switched to Polygon network.');
+            }
+
+            
+                // Initialize contract instances
+                contract = new web3.eth.Contract(stakingContractABI, stakingContractAddress);
+                // Example staking token contract address, replace with your actual token address
+                const stakingTokenAddress = ''; 
+   
+            stakingTokenContract = new web3.eth.Contract(tokenContractABI, tokenContractAddress);
+            refreshStakedInfo()
+
+            getWithdrawCountdown(userAccount)
+
+
+            // Get and display events
+            const events = await getLast3StakedEvents();
+
+
+             // Check if there are more than 3 events
+    if (events.length > 3) {
+        displayEventsInLoop(events);
+    } else {
+        console.log("Not enough events to display in loop.");
+    }
+            // Fetch and display the annualYieldRate
+            const annualYieldRate = await contract.methods.annualYieldRate().call();            
+            document.getElementById('annualYieldRateID').innerText = `${annualYieldRate}%`;
+
+            // Fetch and display the totalStaked
+            const totalStaked = await contract.methods.totalStaked().call();    
+            // Convert from wei to Ether
+            const totalStakedToken = web3.utils.fromWei(totalStaked, 'ether');
+            console.log(`Total Staked: ${totalStakedToken} `);
+            document.getElementById('totalStakedID').innerText = `Total:${totalStakedToken}`;
+
+
+            const totalYielded = await contract.methods.totalYield().call();  
+            const totalYieldedToken = web3.utils.fromWei(totalYielded, 'ether');
+            var totalYieldedTokenShorter=parseFloat(totalYieldedToken).toFixed(2)
+
+            document.getElementById('totalYieldID').innerText = `Total Yielded:${totalYieldedTokenShorter}`;
+
+            //token name
+            const TokenName = await stakingTokenContract.methods.name().call();    
+            // Convert from wei to Ether
+            console.log(`TokenName: ${TokenName} `);
+            document.getElementById('TokenNameID').innerText = `${TokenName}`;
+
+
+
+            } catch (error) {
+                console.error('User denied account access or error occurred:', error);
+            }
+        } else {
+            console.log('Please install MetaMask to use this feature!');
+        }
+    });
+
+document.getElementById('connectButton').onclick = async () => {
+    try {
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        userAccount = (await web3.eth.getAccounts())[0];
+        const shortenedAccount = `${userAccount.slice(0, 6)}...${userAccount.slice(-4)}`;
+
+        document.getElementById('walletAddress').textContent = `Connected: ${shortenedAccount}`;
+        contract = new web3.eth.Contract(stakingContractABI, stakingContractAddress);
+        stakingTokenContract = new web3.eth.Contract(tokenContractABI, tokenContractAddress);
+
+        // Refresh staked info after connecting
+        refreshStakedInfo();
+
+        console.log(`Connected with wallet: ${userAccount}`);
+    } catch (error) {
+        console.error('User denied account access or error occurred:', error);
+    }
+};
+
+document.getElementById('stakeButton').onclick = async () => {
+    const amount = document.getElementById('stakeAmount').value;
+    if (amount <= 0 || !userAccount) {
+        console.log('Invalid amount or not connected to MetaMask');
+        return;
+    }
+
+    const amountInWei = web3.utils.toWei(amount, 'ether');
+    const stakeButton = document.getElementById('stakeButton');
+    const stakeSpinner = document.getElementById('stakeSpinner');
+    const stakeButtonText = document.getElementById('stakeButtonText');
+
+    try {
+        stakeSpinner.style.display = 'inline-block';
+        stakeButtonText.style.display = 'none';
+        stakeButton.disabled = true;
+
+        // Check if the user has granted allowance to the staking contract
+        const allowance = await stakingTokenContract.methods.allowance(userAccount, stakingContractAddress).call();
+        console.log('allowance:',allowance);
+
+
+        // If allowance is less than the staking amount, request approval first
+        if (parseInt(allowance) < parseInt(amountInWei)) {
+          console.log('Requesting token approval...');
+          await stakingTokenContract.methods.approve(stakingContractAddress, MAX_UINT256).send({ from: userAccount });
+          console.log('Token approved!');
+        }
+
+        // Proceed with staking
+        await contract.methods.stake(amountInWei).send({ from: userAccount });
+        console.log('Staking successful');
+
+        // Refresh staked info after staking
+        refreshStakedInfo();
+    } catch (error) {
+        console.error('Staking failed:', error);
+    } finally {
+        stakeSpinner.style.display = 'none';
+        stakeButtonText.style.display = 'inline';
+        stakeButton.disabled = false;
+    }
+};
+
+
+document.getElementById('withdrawButton').onclick = async () => {
+    if (!userAccount) {
+        console.log('User not connected to MetaMask');
+        return;
+    }
+
+    const withdrawButton = document.getElementById('withdrawButton');
+    const withdrawSpinner = document.getElementById('withdrawSpinner');
+    const withdrawButtonText = document.getElementById('withdrawButtonText');
+
+    // Show spinner
+    withdrawSpinner.style.display = 'inline-block';
+    withdrawButtonText.style.display = 'none';
+    withdrawButton.disabled = true;
+
+    try {
+        await contract.methods.withdraw().send({ from: userAccount });
+        console.log('Tokens and Yield Withdrawn Successfully');
+
+        // Refresh staked info after withdrawal
+        refreshStakedInfo();
+    } catch (error) {
+        console.error('Withdrawal failed', error);
+    } finally {
+        // Hide spinner
+        withdrawSpinner.style.display = 'none';
+        withdrawButtonText.style.display = 'inline';
+        withdrawButton.disabled = false;
+    }
+};
+
+// Function to fetch and display staked amount and yield
+async function refreshStakedInfo() {
+    if (!userAccount) {
+        console.log('User not connected to MetaMask');
+        return;
+    }
+
+    try {
+        const stakedAmount = await contract.methods.getStakedAmountAndYield(userAccount).call();
+        document.getElementById('stakedAmount').textContent = web3.utils.fromWei(stakedAmount[0], 'ether');
+        
+        // Apply fade effect to yieldAccumulated
+        const yieldAccumulatedElement = document.getElementById('yieldAccumulated');
+
+console.log("stakedAmount:",stakedAmount[0])
+console.log("yieldAccumulatedElement:",stakedAmount[1])
+
+        const GainPercent = ((parseFloat(stakedAmount[1]) / parseFloat(stakedAmount[0])) * 100).toFixed(2) ;
+
+if (GainPercent>0) {
+        document.getElementById('GainID').textContent=GainPercent+ "%";
+}
+
+        yieldAccumulatedElement.classList.remove('fade-in-out'); // Remove class if already present
+        void yieldAccumulatedElement.offsetWidth; // Trigger reflow to reset animation
+        yieldAccumulatedElement.classList.add('fade-in-out'); // Add class to start animation
+        
+        // Update yieldAccumulated value
+        yieldAccumulatedElement.textContent = web3.utils.fromWei(stakedAmount[1], 'ether');
+        console.log(`Staked Amount: ${stakedAmount[0]}, Yield Accumulated: ${stakedAmount[1]}`);
+    } catch (error) {
+        console.error('Failed to fetch staked info:', error);
+    }
+}
+
+
+
+// Function to get the lastTimestamp and calculate the countdown
+async function getWithdrawCountdown(userAddress) {
+    try {
+        // Call the contract to get the lastTimestamp and LOCK_PERIOD
+        const stakeInfo = await contract.methods.stakers(userAddress).call();
+        const lastTimestamp = BigInt(stakeInfo.lastTimestamp); // Convert to BigInt
+        
+        const LOCK_PERIOD = BigInt(await contract.methods.LOCK_PERIOD().call()); // Convert to BigInt
+
+        // Define the lock period (30 days in seconds)
+        const currentTime = BigInt(Math.floor(Date.now() / 1000));
+        const unlockTime = lastTimestamp + LOCK_PERIOD;
+        const remainingTime = unlockTime - currentTime;
+
+        // Display the countdown
+        displayCountdown(remainingTime);
+
+        
+
+    } catch (error) {
+        console.error('Error fetching stake info:', error);
+    }
+}
+
+// Function to format and display the countdown
+function displayCountdown(remainingTime) {
+    const countdownElement = document.getElementById('LockDaysID');
+    
+    if (remainingTime <= 0n) { // Check against BigInt
+        countdownElement.textContent = 'You can withdraw now!';
+        document.getElementById('withdrawButton').disabled = false;
+        return;
+    }else{
+        document.getElementById('withdrawButton').disabled = true;
+
+    }
+
+    const seconds = Number(remainingTime);
+    const days = Math.floor(seconds / (24 * 60 * 60));
+    const hours = Math.floor((seconds % (24 * 60 * 60)) / (60 * 60));
+    const minutes = Math.floor((seconds % (60 * 60)) / 60);
+    const secs = seconds % 60;
+
+    countdownElement.textContent = `Withdraw time left: ${days}d ${hours}h ${minutes}m ${secs}s`;
+}
+
+
+
+// Function to get the last 3 Staked events
+async function getLast3StakedEvents() {
+    const events = await contract.getPastEvents('Staked', {
+        fromBlock: 0,
+        toBlock: 'latest',
+    });
+
+    console.log("events:", events);
+
+    // Check if there are fewer than 3 events
+    if (events.length < 3) {
+        console.log("Not enough events, doing nothing.");
+        return events;  // Exit the function if there are fewer than 3 events
+    }
+
+    // Get the last 3 events, reversed
+    return events.slice(-3).reverse();
+}
+
+
+
+
+
+
+    // Function to display events in a fade-in fade-out loop
+    function displayEventsInLoop(events) {
+        let currentIndex = 0;
+        const eventDisplay = document.getElementById('eventDisplay');
+        
+        // Helper function to update event content
+        function updateEvent() {
+            var { user, amount } = events[currentIndex].returnValues;
+
+            user=user.slice(0, 4) + '...'+user.slice(-2)
+            amount = web3.utils.fromWei(amount, 'ether');
+
+            const content = `User: ${user}, Staked: ${amount} `;
+            
+            eventDisplay.innerHTML = `<div class="event">${content}</div>`;
+            
+            // Apply active class to trigger fade-in effect
+            const eventDiv = document.querySelector('.event');
+            setTimeout(() => eventDiv.classList.add('active'), 100); // Delay to trigger CSS transition
+            
+            // Remove the active class to trigger fade-out
+            setTimeout(() => eventDiv.classList.remove('active'), 8000); // Fade-out after 4 seconds
+            
+            // Update the index for the next event
+            currentIndex = (currentIndex + 1) % events.length;
+        }
+
+        // Start the loop to update every 6 seconds
+        setInterval(updateEvent, 12000);
+        updateEvent(); // Show the first event immediately
+    }
+
+
+
+ // Mint tokens when mint button is clicked
+    document.getElementById('GetFreeTokenID').addEventListener('click', async () => {
+        const amountToMint = web3.utils.toWei('10', 'ether'); // Amount to mint (for example, 10 tokens)
+ 
+ 
+        try {
+            // Send mint transaction
+            const receipt = await stakingTokenContract.methods.mint(userAccount, amountToMint).send({ from: userAccount });
+            console.log('Mint successful', receipt);
+        } catch (error) {
+            console.error('Mint failed', error);
+        }
+    });
+
+
+
+
+// Refresh staked info every 30 seconds
+setInterval(refreshStakedInfo, 30000);
+
+</script>
+
+</body>
+</html>
