@@ -253,6 +253,10 @@
     let contract;
     let stakingTokenContract;
     let userAccount;
+    let  remainingTime;
+
+    let lastTimestamp;
+    let LOCK_PERIOD;
 
 const stakingContractAddress = '0xDa5516bd305d054e2CF49F535A106E4C5f9CF62A'; // Replace with your deployed staking contract address
     const stakingContractABI = [{"inputs":[{"internalType":"contract IERC20","name":"_stakingToken","type":"address"},{"internalType":"uint256","name":"_annualYieldRate","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Staked","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"yield","type":"uint256"}],"name":"Withdrawn","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"newRate","type":"uint256"}],"name":"YieldRateChanged","type":"event"},{"inputs":[],"name":"LOCK_PERIOD","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"SECONDS_IN_YEAR","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"annualYieldRate","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_staker","type":"address"}],"name":"calculateYield","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_staker","type":"address"}],"name":"getStakedAmountAndYield","outputs":[{"internalType":"uint256","name":"stakedAmount","type":"uint256"},{"internalType":"uint256","name":"yieldAccumulated","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_annualYieldRate","type":"uint256"}],"name":"setAnnualYieldRate","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"stake","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"stakers","outputs":[{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"uint256","name":"lastTimestamp","type":"uint256"},{"internalType":"uint256","name":"yieldAccumulated","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"stakingToken","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalStaked","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalYield","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"withdraw","outputs":[],"stateMutability":"nonpayable","type":"function"}]; // Replace with your staking contract ABI
@@ -305,13 +309,13 @@ const stakingContractAddress = '0xDa5516bd305d054e2CF49F535A106E4C5f9CF62A'; // 
             // Get and display events
             const events = await getLast3StakedEvents();
 
-
-             // Check if there are more than 3 events
-    if (events.length > 3) {
-        displayEventsInLoop(events);
-    } else {
-        console.log("Not enough events to display in loop.");
-    }
+            console.log("events.length:",events.length)
+            // Check if there are more than 3 events
+            if (events.length >= 3) {
+            displayEventsInLoop(events);
+            } else {
+            console.log("Not enough events to display in loop.");
+            }
             // Fetch and display the annualYieldRate
             const annualYieldRate = await contract.methods.annualYieldRate().call();            
             document.getElementById('annualYieldRateID').innerText = `${annualYieldRate}%`;
@@ -398,6 +402,8 @@ document.getElementById('stakeButton').onclick = async () => {
         await contract.methods.stake(amountInWei).send({ from: userAccount });
         console.log('Staking successful');
 
+getWithdrawCountdown(userAccount)
+
         // Refresh staked info after staking
         refreshStakedInfo();
     } catch (error) {
@@ -449,6 +455,10 @@ async function refreshStakedInfo() {
     }
 
     try {
+
+        displayCountdown()
+        
+
         const stakedAmount = await contract.methods.getStakedAmountAndYield(userAccount).call();
         document.getElementById('stakedAmount').textContent = web3.utils.fromWei(stakedAmount[0], 'ether');
         
@@ -462,6 +472,8 @@ console.log("yieldAccumulatedElement:",stakedAmount[1])
 
 if (GainPercent>0) {
         document.getElementById('GainID').textContent=GainPercent+ "%";
+}else{
+    document.getElementById('GainID').textContent= "0%";
 }
 
         yieldAccumulatedElement.classList.remove('fade-in-out'); // Remove class if already present
@@ -483,17 +495,17 @@ async function getWithdrawCountdown(userAddress) {
     try {
         // Call the contract to get the lastTimestamp and LOCK_PERIOD
         const stakeInfo = await contract.methods.stakers(userAddress).call();
-        const lastTimestamp = BigInt(stakeInfo.lastTimestamp); // Convert to BigInt
+         lastTimestamp = BigInt(stakeInfo.lastTimestamp); // Convert to BigInt
         
-        const LOCK_PERIOD = BigInt(await contract.methods.LOCK_PERIOD().call()); // Convert to BigInt
+         LOCK_PERIOD = BigInt(await contract.methods.LOCK_PERIOD().call()); // Convert to BigInt
 
         // Define the lock period (30 days in seconds)
         const currentTime = BigInt(Math.floor(Date.now() / 1000));
         const unlockTime = lastTimestamp + LOCK_PERIOD;
-        const remainingTime = unlockTime - currentTime;
+          remainingTime = unlockTime - currentTime;
 
         // Display the countdown
-        displayCountdown(remainingTime);
+        displayCountdown();
 
         
 
@@ -503,7 +515,7 @@ async function getWithdrawCountdown(userAddress) {
 }
 
 // Function to format and display the countdown
-function displayCountdown(remainingTime) {
+async function displayCountdown() {
     const countdownElement = document.getElementById('LockDaysID');
     
     if (remainingTime <= 0n) { // Check against BigInt
