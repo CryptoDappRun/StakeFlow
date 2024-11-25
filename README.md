@@ -15,11 +15,3 @@ http://cryptodapprun.github.io/StakeFlow/
 
 <br><br><br>
 
-Key Features:
-Seamless Staking: Effortlessly stake a variety of cryptocurrencies and tokens.<br>
-Maximized Yields: Utilize advanced algorithms to optimize reward rates.<br>
-Security First: Built with robust security protocols to ensure the safety of user funds.<br>
-User-Friendly Interface: Intuitive and easy-to-navigate interface for a smooth user experience.<br>
-Transparent Operations: Real-time tracking and reporting of staking performance and rewards.<br>
-StakeFlow is built on [Ethereum/BSC/Polygon/etc.] and leverages smart contracts to automate and secure staking operations. Our goal is to make DeFi staking accessible to everyone, from beginners to experienced users.
-<br>
